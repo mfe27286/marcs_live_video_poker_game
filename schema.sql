@@ -1,0 +1,71 @@
+-- Royal Hold'em (PHP + MySQL) schema
+-- Import this once via phpMyAdmin or run install.php
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  email VARCHAR(190) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  name VARCHAR(24) NOT NULL,
+  avatar VARCHAR(255) DEFAULT NULL,
+  chips INT NOT NULL DEFAULT 10000,
+  hands_played INT NOT NULL DEFAULT 0,
+  hands_won INT NOT NULL DEFAULT 0,
+  best_hand VARCHAR(32) DEFAULT NULL,
+  biggest_pot INT NOT NULL DEFAULT 0,
+  total_winnings INT NOT NULL DEFAULT 0,
+  last_bonus_at DATETIME DEFAULT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_users_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS rooms (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  code CHAR(5) NOT NULL,
+  name VARCHAR(40) NOT NULL,
+  host_id INT UNSIGNED NOT NULL,
+  state LONGTEXT NOT NULL,
+  meta LONGTEXT NOT NULL,
+  version INT UNSIGNED NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_rooms_code (code),
+  KEY idx_rooms_updated (updated_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS room_members (
+  room_id INT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  name VARCHAR(24) NOT NULL,
+  avatar VARCHAR(255) DEFAULT NULL,
+  last_seen INT UNSIGNED NOT NULL,
+  PRIMARY KEY (room_id, user_id),
+  CONSTRAINT fk_members_room FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS room_events (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  room_id INT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  name VARCHAR(24) NOT NULL,
+  type VARCHAR(16) NOT NULL,
+  payload VARCHAR(255) NOT NULL,
+  created_at INT UNSIGNED NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_events_room (room_id, id),
+  CONSTRAINT fk_events_room FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS signals (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  room_id INT UNSIGNED NOT NULL,
+  from_user INT UNSIGNED NOT NULL,
+  to_user INT UNSIGNED NOT NULL,
+  type VARCHAR(16) NOT NULL,
+  payload MEDIUMTEXT NOT NULL,
+  created_at INT UNSIGNED NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_signals_target (room_id, to_user, id),
+  CONSTRAINT fk_signals_room FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

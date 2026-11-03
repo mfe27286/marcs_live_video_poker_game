@@ -1,0 +1,20 @@
+# Royal Hold'em – Apache rules (works on cPanel shared hosting)
+
+# Block direct access to internal files
+<FilesMatch "^(config\.php|config\.sample\.php|schema\.sql)$">
+  Require all denied
+</FilesMatch>
+RedirectMatch 403 ^/.*/lib/.*$
+RedirectMatch 403 ^/lib/.*$
+
+# Don't cache API responses
+<IfModule mod_headers.c>
+  <FilesMatch "\.(php)$">
+    Header set Cache-Control "no-store"
+  </FilesMatch>
+</IfModule>
+
+# Sensible PHP settings (ignored if the host disallows them)
+<IfModule mod_php.c>
+  php_flag display_errors Off
+</IfModule>
